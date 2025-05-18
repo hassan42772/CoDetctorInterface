@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MQ Gas Sensor Monitor</title>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      /* padding: 30px; */
+      transition: background-color 0.3s, color 0.3s;
+      height: 100vh;
+      
+      display: flex;
+      flex-direction: column;
+      
+    }
+
+    #toggleBtn {
+      position: fixed; /* fixed so it stays at the corner on scroll */
+      top: 20px;
+      right: 30px;
+      background: none;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+      color: inherit;
+      z-index: 100;
+    }
+
+    /* Container to hold left and right panels */
+    .container {
+      display: flex;
+      flex: 1;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      
+      margin: 0 auto;
+      width: 100%;
+      
+    }
+
+    /* Left side with headings and value */
+    .left-panel {
+      flex: 1 1 300px;
+      min-width: 300px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      height: 90vh;
+      /* gap: 40px; */
+      padding-left: 20px;
+      
+      
+      
+    }
+    h1{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding-bottom: 120px;
+        font-size: 2.4em;
+        margin-bottom: 20px;
+    }
+
+    h1, h2 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0;
+      width: 100%;
+    }
+
+
+    h2 {
+      font-size: 1.8em;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #value {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-bottom: 30px;
+      
+      display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 3px solid rgb(255, 255, 255);
+        width: 80%;
+        padding: 20px;
+        margin: 0 auto;
+        border-radius: 30px;
+        background: linear-gradient(to right, #00ffff, #00ffffdd);
+        color: #fff;
+    }
+    .reading{
+      
+      height: 32vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      align-items: center;
+      border-radius: 50px;
+    }
+
+    /* Right side with chart */
+    .right-panel {
+      flex: 1 1 500px;
+      min-width: 300px;
+      display: flex;
+        flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      
+      
+        padding: 10px;
+        border-radius: 50px;
+        
+    }
+    .right-panel h1 {
+      font-size: 2.5em;
+      
+    }
+    .right-panel h1 i {
+      font-size: 1.3em;
+      margin-bottom: 20px;
+      padding-right: 10px;
+        color: #74C0FC;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: 400px;
+      border-radius: 40px;
+      box-shadow: #00ffff 0px 1px 18px,
+                  #00ffff 0px 1px 18px;
+      padding: 15px;
+      background: #fff;
+    }
+
+    /* Light Theme */
+    body.light {
+      background-color: #f4f7fc;
+      color: #333;
+    }
+
+    body.light h1 {
+      color: #007acc;
+      text-shadow:
+        1px 1px 2px rgba(0, 0, 0, 0.1),
+        0px 19px 38px rgba(0, 0, 0, 0.3),
+        0px 15px 12px rgba(0, 0, 0, 0.22);
+    }
+
+    body.light h2 {
+      color: #0099cc;
+    }
+
+    body.light #value {
+      color: #007acc;
+    }
+
+    body.light canvas {
+      background: #ffffff;
+    }
+
+    /* Dark Theme */
+    body.dark {
+      background-color: #111;
+      color: #eee;
+    }
+
+    body.dark h1 {
+      color: #ffffff;
+      text-shadow: rgba(0, 153, 204, 0.7) 0px 19px 38px;
+    }
+
+    body.dark h2 {
+      color: #fff;
+       animation: pulseGlow 2s infinite ease-in-out;
+    }
+    body.dark h2 i {
+      color: #ff0000;
+      font-size: 1em;
+      animation: Glow2 2s infinite ease-in-out;
+    }
+@keyframes Glow2 {
+  0%, 100% {
+    color: #d30d0d;
+    text-shadow:
+      0 0 5px #d30d0d,
+      0 0 10px #d30d0d,
+      0 0 20px #d30d0d,
+      0 0 30px #ff4c4c;
+  }
+  50% {
+    color: #a10808;
+    text-shadow:
+      0 0 2px #a10808,
+      0 0 5px #a10808,
+      0 0 10px #a10808,
+      0 0 15px #ff1a1a;
+  }
+}
+    body.dark #value {
+      color: #fff;
+    }
+
+    body.dark canvas {
+      background: #1c1c1c;
+    }
+    @keyframes pulseGlow {
+  0%, 100% {
+    color: #ffffff;
+    text-shadow:
+      0 0 5px #ffffff,
+      0 0 10px #ffffff,
+      0 0 20px #ffffff,
+      0 0 30px rgb(216, 204, 204);
+  }
+  50% {
+    color: #ffffff;
+    text-shadow:
+      0 0 2px #ffffff,
+      0 0 5px #ffffff,
+      0 0 10px #ffffff,
+      0 0 15px #ffffff;
+  }
+}
+
+
+
+
+    /* Responsive for small screens */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        padding: 0 20px;
+      }
+
+      .left-panel, .right-panel {
+        min-width: auto;
+        flex: none;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5em;
+      }
+
+      h2 {
+        font-size: 1.4em;
+      }
+
+      #value {
+        font-size: 2em;
+      }
+    }
+  </style>
+</head>
+<body class="dark">
+  <!-- <button id="toggleBtn" title="Toggle Theme"><i class="fas fa-moon"></i></button> -->
+
+  <div class="container">
+    <div class="left-panel">
+      <h1><i class="fa-solid fa-smog" style="color: #74C0FC;"></i> SMOKE DETECTOR SYSTEM</h1>
+      <div class="reading">
+
+          <h2><i class="fa-solid fa-circle" style="color: #d30d0d;"></i> Live Smoke Gas Monitor</h2>
+          <div id="value"> Waiting for data...</div>
+      </div>
+    </div>
+    <div class="right-panel">
+      <h1><i class="fa-solid fa-chart-line"></i>  SMOKE GRAPH</h1>
+      <canvas id="gasChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    const socket = io();
+    const valueDiv = document.getElementById('value');
+    const ctx = document.getElementById('gasChart').getContext('2d');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const body = document.body;
+
+    // New gradient: from bright sky blue to transparent, with a subtle purple hint in shadow
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(0, 153, 255, 0.4)'); // bright sky blue
+    gradient.addColorStop(1, 'rgba(102, 51, 153, 0)');  // transparent purple-ish
+
+    const shadowPlugin = {
+      id: 'shadowLine',
+      beforeDraw: (chart) => {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor = '#00ffffd0'; // purple shadow
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      },
+      afterDraw: (chart) => {
+        chart.ctx.restore();
+      }
+    };
+
+    const gasChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Gas Level',
+          data: [],
+          borderColor: '#00ffff',    // sky blue line
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          borderWidth: 4,
+          pointBackgroundColor: [],
+          pointRadius: [],
+          pointBorderColor: [],
+          pointBorderWidth: []
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: {
+          duration: 2000,
+          easing: 'easeOutElastic'
+        },
+        plugins: {
+          legend: {
+            labels: { color: '#333' }
+          },
+          tooltip: {
+            backgroundColor: '#fff',
+            titleColor: '#000',
+            bodyColor: '#007acc',
+            borderColor: '#007acc',
+            borderWidth: 1,
+            cornerRadius: 5,
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#666' },
+            grid: { color: '#ddd' },
+            title: {
+              display: true,
+              text: 'Reading #',
+              color: '#666'
+            }
+          },
+          y: {
+            ticks: { color: '#666' },
+            grid: { color: '#ddd' },
+            min: 0,
+            max: 350,
+            title: {
+              display: true,
+              text: 'Gas Level',
+              color: '#666'
+            }
+          }
+        }
+      },
+      plugins: [shadowPlugin]
+    });
+
+    let counter = 0;
+    let timestamps = [];
+    const dataLifespan = 10 * 1000; // 10 seconds
+
+    socket.on('gasData', (value) => {
+      console.log('Received gas data:', value);
+      const now = Date.now();
+      valueDiv.innerText = `🚨 Gas Level: ${value}`;
+
+      const dataset = gasChart.data.datasets[0];
+
+      gasChart.data.labels.push(counter++);
+      dataset.data.push(value);
+      dataset.pointBackgroundColor.push('#0099ff'); // sky blue points by default
+      dataset.pointRadius.push(0);
+      dataset.pointBorderColor.push('transparent');
+      dataset.pointBorderWidth.push(0);
+      timestamps.push(now);
+
+      // Style points based on value
+      const last = dataset.data.length - 1;
+      if (value >= 250) {
+        dataset.pointBackgroundColor[last] = '#660099'; // purple alert
+        dataset.pointRadius[last] = 7;
+        dataset.pointBorderColor[last] = '#000';
+        dataset.pointBorderWidth[last] = 2;
+      } else {
+        dataset.pointBackgroundColor[last] = '#3399ff'; // lighter blue
+        dataset.pointRadius[last] = 6;
+        dataset.pointBorderColor[last] = '#fff';
+        dataset.pointBorderWidth[last] = 2;
+      }
+
+      gasChart.update();
+    });
+
+    // Remove only 1 old point every 10 seconds
+    setInterval(() => {
+      const now = Date.now();
+      const ds = gasChart.data.datasets[0];
+
+      if (timestamps.length > 0 && now - timestamps[0] > dataLifespan) {
+        timestamps.shift();
+        gasChart.data.labels.shift();
+        ds.data.shift();
+        ds.pointBackgroundColor.shift();
+        ds.pointRadius.shift();
+        ds.pointBorderColor.shift();
+        ds.pointBorderWidth.shift();
+        gasChart.update();
+      }
+    }, 10000); // Every 10 seconds
+
+    // Theme toggle logic
+    toggleBtn.addEventListener('click', () => {
+      body.classList.toggle('light');
+      body.classList.toggle('dark');
+
+      const isDark = body.classList.contains('dark');
+      toggleBtn.innerHTML = isDark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+
+      gasChart.options.plugins.legend.labels.color = isDark ? '#eee' : '#333';
+      gasChart.options.scales.x.ticks.color = isDark ? '#ccc' : '#666';
+      gasChart.options.scales.x.grid.color = isDark ? '#333' : '#ddd';
+      gasChart.options.scales.y.ticks.color = isDark ? '#ccc' : '#666';
+      gasChart.options.scales.y.grid.color = isDark ? '#333' : '#ddd';
+      gasChart.options.scales.x.title.color = isDark ? '#aaa' : '#666';
+      gasChart.options.scales.y.title.color = isDark ? '#aaa' : '#666';
+      gasChart.options.plugins.tooltip.backgroundColor = isDark ? '#222' : '#fff';
+      gasChart.options.plugins.tooltip.titleColor = isDark ? '#fff' : '#000';
+      gasChart.options.plugins.tooltip.bodyColor = isDark ? '#66ccff' : '#007acc';
+      gasChart.options.plugins.tooltip.borderColor = isDark ? '#66ccff' : '#007acc';
+
+      gasChart.update();
+    });
+  </script>
+</body>
+</html>
